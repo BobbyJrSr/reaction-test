@@ -127,9 +127,8 @@
     }
 
     function startTrial() {
-      // For audio phase: no "Wait..." text, keep blue
       if (isAudioPhase) {
-        cue.textContent = "";
+        cue.textContent = "Tap when you hear sound";
         cue.style.backgroundColor = "#0077cc"; // blue
       } else {
         cue.textContent = "Wait...";
@@ -140,7 +139,6 @@
       setTimeout(() => {
         startTime = Date.now();
         if (isAudioPhase) {
-          cue.textContent = "Tap when you hear sound";
           let beep = playBeep();
           cue.onclick = () => {
             const reactionTime = Date.now() - startTime;
