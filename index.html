@@ -127,14 +127,19 @@
     }
 
     function startTrial() {
-      cue.textContent = "Wait...";
-      cue.style.backgroundColor = isAudioPhase ? "#0077cc" : "grey";
+      // For audio phase: no "Wait..." text, keep blue
+      if (isAudioPhase) {
+        cue.textContent = "";
+        cue.style.backgroundColor = "#0077cc"; // blue
+      } else {
+        cue.textContent = "Wait...";
+        cue.style.backgroundColor = "grey";
+      }
       cue.classList.remove("hidden");
 
       setTimeout(() => {
         startTime = Date.now();
         if (isAudioPhase) {
-          cue.style.backgroundColor = "#0077cc"; // stay blue
           cue.textContent = "Tap when you hear sound";
           let beep = playBeep();
           cue.onclick = () => {
