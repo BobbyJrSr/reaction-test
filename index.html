@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reaction Time Test</title>
   <style>
     body {
@@ -10,7 +10,7 @@
       text-align: center;
       margin: 0;
       padding: 0;
-      background: #f4f4f4;
+      background: #f0f0f0;
     }
 
     .container {
@@ -19,183 +19,193 @@
       padding: 20px;
     }
 
-    #test-area {
-      background-color: #ddd;
+    .square {
+      width: 100%;
+      max-width: 300px;
       height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5em;
-      margin: 20px 0;
+      background-color: #4CAF50;
+      margin: 20px auto;
+      display: none;
       border-radius: 12px;
     }
 
     button {
-      padding: 15px 25px;
+      padding: 12px 20px;
       font-size: 16px;
       margin: 10px;
-      border: none;
-      border-radius: 8px;
-      background-color: #007BFF;
-      color: white;
-      cursor: pointer;
     }
 
     input {
       padding: 10px;
-      font-size: 1em;
-      margin: 5px;
-      width: 90%;
-      max-width: 300px;
-      border-radius: 6px;
-      border: 1px solid #aaa;
+      margin: 8px;
+      width: 80%;
+      font-size: 16px;
     }
 
     #results {
-      margin-top: 20px;
       text-align: left;
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Reaction Time Test</h1>
-    <p>Enter your details to begin:</p>
-    <input id="name" placeholder="Name" /><br />
-    <input id="age" type="number" placeholder="Age" /><br />
-    <input id="sex" placeholder="Sex (M/F/Other)" /><br />
-    <button onclick="startVisual()">Start Visual Test</button>
-    <button onclick="startAudio()">Start Audio Test</button>
+    <h2>Reaction Time Test</h2>
+    <p>Enter your information to begin.</p>
+    <input type="text" id="name" placeholder="Name"><br>
+    <input type="number" id="age" placeholder="Age"><br>
+    <input type="text" id="sex" placeholder="Sex (M/F/Other)"><br>
+    <button onclick="startVisualInstructions()">Start Visual Test</button>
 
-    <div id="test-area">Instructions will appear here</div>
+    <div class="square" id="square"></div>
+    <p id="cue-text"></p>
 
     <div id="results"></div>
   </div>
 
-  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" loop></audio>
-
   <script>
-    const testArea = document.getElementById("test-area");
-    const resultsDiv = document.getElementById("results");
-    const beep = document.getElementById("beep");
+    const square = document.getElementById("square");
+    const cueText = document.getElementById("cue-text");
+    const resultDiv = document.getElementById("results");
 
-    let visualTimes = [];
-    let audioTimes = [];
-    let currentType = ""; // "visual" or "audio"
-    let testCount = 0;
-    let startTime;
+    const nameInput = document.getElementById("name");
+    const ageInput = document.getElementById("age");
+    const sexInput = document.getElementById("sex");
 
-    function showInstructions(message) {
-      testArea.innerText = message;
-      testArea.style.backgroundColor = "#ddd";
-    }
-
-    function startVisual() {
-      if (!getUserInfo()) return;
-      currentType = "visual";
-      testCount = 0;
-      visualTimes = [];
-      showInstructions("You will see a color flash. Tap as quickly as possible!");
-      setTimeout(runTest, 2000);
-    }
-
-    function startAudio() {
-      if (!getUserInfo()) return;
-      currentType = "audio";
-      testCount = 0;
-      audioTimes = [];
-      showInstructions("You will hear a beep. Tap as quickly as possible!");
-      setTimeout(runTest, 2000);
-    }
-
-    function runTest() {
-      let delay = Math.random() * 3000 + 1000; // 1s–4s random delay
-      showInstructions("Wait for it...");
-      setTimeout(() => {
-        startTime = Date.now();
-
-        if (currentType === "visual") {
-          testArea.innerText = "TAP NOW!";
-          testArea.style.backgroundColor = "#4CAF50";
-        } else {
-          testArea.innerText = "Audio cue playing… TAP!";
-          beep.play();
-        }
-
-        testArea.addEventListener("click", recordReaction, { once: true });
-        testArea.addEventListener("touchstart", recordReaction, { once: true });
-      }, delay);
-    }
-
-    function recordReaction() {
-      let time = Date.now() - startTime;
-
-      if (currentType === "visual") {
-        visualTimes.push(time);
-        testArea.style.backgroundColor = "#ddd";
-      } else {
-        audioTimes.push(time);
-        beep.pause();
-        beep.currentTime = 0;
-      }
-
-      testCount++;
-
-      if (testCount < 5) {
-        setTimeout(runTest, 1000);
-      } else {
-        showInstructions("Done! Calculating...");
-        setTimeout(showResults, 1000);
-      }
-    }
-
-    function showResults() {
-      let avgVisual = average(visualTimes);
-      let avgAudio = average(audioTimes);
-      let resultHTML = `<h2>Results</h2>`;
-      resultHTML += `<p><strong>Name:</strong> ${name.value}</p>`;
-      resultHTML += `<p><strong>Age:</strong> ${age.value}</p>`;
-      resultHTML += `<p><strong>Sex:</strong> ${sex.value}</p>`;
-      resultHTML += `<p><strong>Visual times (ms):</strong> ${visualTimes.join(", ")}</p>`;
-      resultHTML += `<p><strong>Average visual reaction time:</strong> ${avgVisual.toFixed(2)} ms</p>`;
-      resultHTML += `<p><strong>Audio times (ms):</strong> ${audioTimes.join(", ")}</p>`;
-      resultHTML += `<p><strong>Average audio reaction time:</strong> ${avgAudio.toFixed(2)} ms</p>`;
-      resultsDiv.innerHTML = resultHTML;
-
-      sendToGoogleSheet({
-        name: name.value,
-        age: age.value,
-        sex: sex.value,
-        visualTimes: visualTimes,
-        audioTimes: audioTimes,
-        avgVisual: avgVisual.toFixed(2),
-        avgAudio: avgAudio.toFixed(2),
-      });
-    }
-
-    function average(arr) {
-      return arr.reduce((a, b) => a + b, 0) / arr.length;
-    }
+    let startTime, testType = 'visual', visualTimes = [], audioTimes = [], trial = 0;
+    const totalTrials = 5;
+    let audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 
     function getUserInfo() {
-      if (!name.value || !age.value || !sex.value) {
+      if (!nameInput.value || !ageInput.value || !sexInput.value) {
         alert("Please enter your name, age, and sex.");
         return false;
       }
       return true;
     }
 
+    function startVisualInstructions() {
+      if (!getUserInfo()) return;
+      cueText.textContent = "You will see a square appear. Tap or click it as fast as you can!";
+      setTimeout(startVisualTest, 3000);
+    }
+
+    function startVisualTest() {
+      testType = 'visual';
+      visualTimes = [];
+      trial = 0;
+      nextTrial();
+    }
+
+    function startAudioInstructions() {
+      cueText.textContent = "You will hear a sound. Tap or click the screen as fast as you can!";
+      setTimeout(startAudioTest, 3000);
+    }
+
+    function startAudioTest() {
+      testType = 'audio';
+      audioTimes = [];
+      trial = 0;
+      nextTrial();
+    }
+
+    function nextTrial() {
+      square.style.display = "none";
+      cueText.textContent = "Wait for the cue...";
+      const delay = Math.random() * 2000 + 1000;
+
+      setTimeout(() => {
+        if (testType === 'visual') {
+          square.style.display = "block";
+          startTime = Date.now();
+        } else {
+          cueText.textContent = "Audio cue!";
+          audio.loop = true;
+          audio.play();
+          startTime = Date.now();
+        }
+      }, delay);
+    }
+
+    function recordReaction() {
+      if (!startTime) return;
+
+      const reactionTime = Date.now() - startTime;
+      if (testType === 'visual') {
+        visualTimes.push(reactionTime);
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        audioTimes.push(reactionTime);
+      }
+
+      trial++;
+      startTime = null;
+      cueText.textContent = `Reaction time: ${reactionTime} ms`;
+
+      if (trial < totalTrials) {
+        setTimeout(nextTrial, 1000);
+      } else {
+        if (testType === 'visual') {
+          startAudioInstructions();
+        } else {
+          showResults();
+        }
+      }
+    }
+
+    function showResults() {
+      const visualAvg = avg(visualTimes);
+      const audioAvg = avg(audioTimes);
+
+      let resultHTML = `<h3>Results</h3>`;
+      resultHTML += `<p><strong>Name:</strong> ${nameInput.value}</p>`;
+      resultHTML += `<p><strong>Age:</strong> ${ageInput.value}</p>`;
+      resultHTML += `<p><strong>Sex:</strong> ${sexInput.value}</p>`;
+      resultHTML += `<p><strong>Visual Reaction Times:</strong> ${visualTimes.join(", ")} ms</p>`;
+      resultHTML += `<p><strong>Visual Average:</strong> ${visualAvg} ms</p>`;
+      resultHTML += `<p><strong>Audio Reaction Times:</strong> ${audioTimes.join(", ")} ms</p>`;
+      resultHTML += `<p><strong>Audio Average:</strong> ${audioAvg} ms</p>`;
+      resultDiv.innerHTML = resultHTML;
+
+      sendToGoogleSheet({
+        name: nameInput.value,
+        age: ageInput.value,
+        sex: sexInput.value,
+        visualTimes: visualTimes.join(", "),
+        audioTimes: audioTimes.join(", "),
+        visualAvg,
+        audioAvg
+      });
+    }
+
+    function avg(arr) {
+      return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+    }
+
     function sendToGoogleSheet(data) {
       fetch("https://script.google.com/macros/s/AKfycbzbdvJmThNP4RacCKd746sEdmTgF8unGX6Y3a9ft-Bof_U5mBXYIN5zziLCBFZ_8R1jhQ/exec", {
         method: "POST",
-        body: JSON.stringify(data),
+        mode: "no-cors",
         headers: {
           "Content-Type": "application/json"
-        }
-      })
-      .then(res => console.log("Submitted to Google Sheet"))
-      .catch(err => console.error("Error sending data:", err));
+        },
+        body: JSON.stringify(data)
+      });
     }
+
+    // Support both mouse and touch
+    square.addEventListener("click", recordReaction);
+    document.body.addEventListener("click", (e) => {
+      if (testType === 'audio' && startTime) recordReaction();
+    });
+
+    document.body.addEventListener("touchstart", (e) => {
+      if (startTime) recordReaction();
+    });
   </script>
 </body>
 </html>
