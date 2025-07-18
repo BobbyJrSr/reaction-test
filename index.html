@@ -1,173 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reaction Time Test</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       padding: 20px;
-      margin: 0;
-      background-color: #f0f4f8;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1rem;
     }
     #testBox {
-      width: 90%;
+      margin: 20px auto;
+      width: 80%;
       max-width: 400px;
       height: 200px;
-      background-color: #3498db;
-      margin: 40px auto;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
-      border-radius: 20px;
-      font-size: 24px;
+      background-color: #3498db;
       color: white;
-      cursor: pointer;
+      font-size: 1.2rem;
+      border-radius: 12px;
       user-select: none;
     }
     #resultsBox {
-      margin-top: 30px;
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
+      display: none;
+      margin-top: 20px;
     }
-    input {
-      padding: 8px;
-      margin: 5px;
-    }
-    button {
-      padding: 10px 20px;
+    #copyText {
+      width: 100%;
+      height: 120px;
       margin-top: 10px;
-      font-size: 16px;
-      cursor: pointer;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
-
   <h1>Reaction Time Test</h1>
-  <p>Please enter your details:</p>
-  <input type="text" id="name" placeholder="Name">
-  <input type="number" id="age" placeholder="Age" min="1">
+  <p>Enter your details:</p>
+  <input type="text" id="name" placeholder="Name" required />
+  <input type="number" id="age" placeholder="Age" required />
   <select id="sex">
     <option value="">Sex</option>
     <option value="Male">Male</option>
     <option value="Female">Female</option>
     <option value="Other">Other</option>
   </select>
-  <br>
-  <button onclick="startTest()">Start Test</button>
+  <br />
+  <button id="startBtn">Start Test</button>
 
-  <div id="testBox" style="display:none;">Click when you see/hear the cue!</div>
+  <div id="testBox">Click to start</div>
 
-  <div id="resultsBox" style="display:none;">
-    <h3>Results</h3>
-    <p id="resultOutput"></p>
-    <p><strong>Copy your results and paste them into the form:</strong></p>
-    <textarea id="copyText" rows="5" style="width:100%;"></textarea>
+  <div id="resultsBox">
+    <h2>Results</h2>
+    <div id="resultOutput"></div>
+    <textarea id="copyText" readonly></textarea><br />
+    <button id="copyBtn">Copy to Clipboard</button>
   </div>
 
-  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
   <script>
-    let visualTimes = [];
-    let audioTimes = [];
-    let currentType = "visual";
-    let count = 0;
-    let startTime;
-    let testBox = document.getElementById("testBox");
-    let beep = document.getElementById("beep");
+    document.addEventListener("DOMContentLoaded", function () {
+      const startBtn = document.getElementById("startBtn");
+      const testBox = document.getElementById("testBox");
+      const resultOutput = document.getElementById("resultOutput");
+      const resultsBox = document.getElementById("resultsBox");
+      const beep = document.getElementById("beep");
+      const copyBtn = document.getElementById("copyBtn");
+      const textarea = document.getElementById("copyText");
 
-    function startTest() {
-      const name = document.getElementById("name").value.trim();
-      const age = document.getElementById("age").value.trim();
-      const sex = document.getElementById("sex").value.trim();
+      let name, age, sex;
+      let visualTimes = [], audioTimes = [];
+      let currentType = "visual", count = 0, startTime = null;
 
-      if (!name || !age || !sex) {
-        alert("Please enter your name, age, and sex.");
-        return;
-      }
+      copyBtn.addEventListener("click", () => {
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // For mobile
+        document.execCommand("copy");
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = "Copy to Clipboard"), 2000);
+      });
 
-      visualTimes = [];
-      audioTimes = [];
-      currentType = "visual";
-      count = 0;
-      document.getElementById("resultsBox").style.display = "none";
-      document.getElementById("testBox").style.display = "flex";
-      showInstruction("visual");
-    }
+      startBtn.addEventListener("click", () => {
+        name = document.getElementById("name").value.trim();
+        age = document.getElementById("age").value.trim();
+        sex = document.getElementById("sex").value.trim();
 
-    function showInstruction(type) {
-      testBox.innerText = type === "visual"
-        ? "You will see a color flash. Click as fast as you can when it changes."
-        : "You will hear a beep. Click as fast as you can when you hear it.";
-      testBox.style.backgroundColor = "#3498db";
-      setTimeout(() => {
-        runTrial();
-      }, 2500);
-    }
-
-    function runTrial() {
-      testBox.innerText = "Wait for the cue...";
-      testBox.style.backgroundColor = "#3498db";
-      const delay = Math.floor(Math.random() * 3000) + 1000;
-      setTimeout(() => {
-        startTime = Date.now();
-        if (currentType === "visual") {
-          testBox.style.backgroundColor = "#2ecc71";
-        } else {
-          beep.play();
+        if (!name || !age || !sex) {
+          alert("Please enter your name, age, and sex.");
+          return;
         }
-      }, delay);
-    }
 
-    testBox.addEventListener("click", () => {
-      if (!startTime) return;
-      const reactionTime = Date.now() - startTime;
-      if (currentType === "visual") {
-        visualTimes.push(reactionTime);
-      } else {
-        audioTimes.push(reactionTime);
-      }
-      startTime = null;
-      count++;
-
-      if (count < 5) {
-        runTrial();
-      } else if (currentType === "visual") {
-        currentType = "audio";
+        visualTimes = [];
+        audioTimes = [];
+        currentType = "visual";
         count = 0;
-        showInstruction("audio");
-      } else {
-        showResults();
+        resultsBox.style.display = "none";
+        testBox.style.display = "flex";
+        showInstruction("visual");
+      });
+
+      function showInstruction(type) {
+        testBox.innerText = type === "visual"
+          ? "Watch the box. Click when it turns green!"
+          : "Listen for the beep. Click as fast as you can!";
+        testBox.style.backgroundColor = "#3498db";
+        setTimeout(runTrial, 2500);
       }
-    });
 
-    function showResults() {
-      document.getElementById("testBox").style.display = "none";
-      document.getElementById("resultsBox").style.display = "block";
-      const name = document.getElementById("name").value.trim();
-      const age = document.getElementById("age").value.trim();
-      const sex = document.getElementById("sex").value.trim();
-      const avgVisual = Math.round(visualTimes.reduce((a,b) => a + b, 0) / visualTimes.length);
-      const avgAudio = Math.round(audioTimes.reduce((a,b) => a + b, 0) / audioTimes.length);
+      function runTrial() {
+        testBox.innerText = "Wait for the cue...";
+        testBox.style.backgroundColor = "#3498db";
+        const delay = Math.floor(Math.random() * 3000) + 1000;
+        setTimeout(() => {
+          startTime = Date.now();
+          if (currentType === "visual") {
+            testBox.style.backgroundColor = "#2ecc71";
+            testBox.innerText = "CLICK!";
+          } else {
+            beep.loop = true;
+            beep.play();
+            testBox.innerText = "CLICK!";
+          }
+        }, delay);
+      }
 
-      const resultText = `
+      testBox.addEventListener("click", () => {
+        if (!startTime) return;
+
+        const reactionTime = Date.now() - startTime;
+        if (currentType === "audio") {
+          beep.pause();
+          beep.currentTime = 0;
+        }
+
+        (currentType === "visual" ? visualTimes : audioTimes).push(reactionTime);
+        startTime = null;
+        count++;
+
+        if (count < 5) {
+          runTrial();
+        } else if (currentType === "visual") {
+          currentType = "audio";
+          count = 0;
+          showInstruction("audio");
+        } else {
+          showResults();
+        }
+      });
+
+      function showResults() {
+        testBox.style.display = "none";
+        resultsBox.style.display = "block";
+        const avgVisual = Math.round(visualTimes.reduce((a, b) => a + b, 0) / visualTimes.length);
+        const avgAudio = Math.round(audioTimes.reduce((a, b) => a + b, 0) / audioTimes.length);
+        const summary = `
 Name: ${name}
 Age: ${age}
 Sex: ${sex}
-Average Visual Reaction Time: ${avgVisual} ms
-Average Audio Reaction Time: ${avgAudio} ms`;
+Avg Visual: ${avgVisual} ms
+Avg Audio: ${avgAudio} ms
+Visual Times: ${visualTimes.join(", ")} ms
+Audio Times: ${audioTimes.join(", ")} ms`;
 
-      document.getElementById("resultOutput").innerText = resultText.replace(/\n/g, "<br>");
-      document.getElementById("copyText").value = resultText;
-    }
+        resultOutput.innerHTML = summary.replace(/\n/g, "<br>");
+        textarea.value = summary.trim();
+      }
+    });
   </script>
-
 </body>
 </html>
