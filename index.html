@@ -43,7 +43,7 @@
       color: white;
       user-select: none;
     }
-    #results {
+    #results, #liveResult {
       text-align: left;
       margin-top: 20px;
     }
@@ -73,8 +73,10 @@
 
     <div id="cue" class="hidden">Wait...</div>
 
+    <div id="liveResult" class="hidden"><strong>Last Reaction Time:</strong> <span id="lastTime">-</span> ms</div>
+
     <div id="results" class="hidden">
-      <h2>Results</h2>
+      <h2>Final Results</h2>
       <pre id="resultText"></pre>
       <button id="copyBtn">Copy Results</button>
     </div>
@@ -86,6 +88,8 @@
     const resultsDiv = document.getElementById("results");
     const resultText = document.getElementById("resultText");
     const copyBtn = document.getElementById("copyBtn");
+    const liveResult = document.getElementById("liveResult");
+    const lastTime = document.getElementById("lastTime");
 
     const nameInput = document.getElementById("name");
     const ageInput = document.getElementById("age");
@@ -127,6 +131,8 @@
           cue.onclick = () => {
             const reactionTime = Date.now() - startTime;
             audioTimes.push(reactionTime);
+            lastTime.textContent = reactionTime;
+            liveResult.classList.remove("hidden");
             beep.stop();
             cue.classList.add("hidden");
             cue.onclick = null;
@@ -138,6 +144,8 @@
           cue.onclick = () => {
             const reactionTime = Date.now() - startTime;
             visualTimes.push(reactionTime);
+            lastTime.textContent = reactionTime;
+            liveResult.classList.remove("hidden");
             cue.classList.add("hidden");
             cue.onclick = null;
             runNextTrial();
@@ -153,7 +161,7 @@
       } else if (!isAudioPhase) {
         isAudioPhase = true;
         trialCount = 0;
-        alert("Now we will test AUDIO reaction. Click as soon as you hear the tone.");
+        alert("Now we will test AUDIO reaction. Tap as soon as you hear the sound.");
         setTimeout(startTrial, 1000);
       } else {
         showResults();
@@ -195,7 +203,8 @@ Audio Average: ${audioAvg.toFixed(2)} ms
       trialCount = 0;
       isAudioPhase = false;
       resultsDiv.classList.add("hidden");
-      alert("You will see a flash. Tap as soon as you see it.");
+      liveResult.classList.add("hidden");
+      alert("You will see a color. Tap as soon as you see it change.");
       startTrial();
     };
 
