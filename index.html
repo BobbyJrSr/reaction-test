@@ -2,136 +2,200 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reaction Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reaction Time Test</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    #test-area {
+      background-color: #ddd;
+      height: 300px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 10px;
-      font-family: sans-serif;
-      background-color: #f0f0f0;
-      text-align: center;
-    }
-    h1 {
       font-size: 1.5em;
+      margin: 20px 0;
+      border-radius: 12px;
     }
-    #cueBox {
-      width: 80vw;
-      height: 80vw;
-      max-width: 400px;
-      max-height: 400px;
-      background-color: gray;
-      margin: 20px;
-    }
+
     button {
-      font-size: 1.2em;
-      padding: 0.5em 1em;
+      padding: 15px 25px;
+      font-size: 16px;
       margin: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
     }
+
+    input {
+      padding: 10px;
+      font-size: 1em;
+      margin: 5px;
+      width: 90%;
+      max-width: 300px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+    }
+
     #results {
       margin-top: 20px;
-      font-size: 1em;
-      max-width: 90vw;
+      text-align: left;
     }
   </style>
 </head>
 <body>
-  <h1 id="phase">Welcome to the Reaction Test</h1>
-  <p id="instructions">Click to start the visual test. A square will flash; click as fast as you can.</p>
-  <div id="cueBox"></div>
-  <button id="startBtn">Start</button>
-  <div id="results"></div>
+  <div class="container">
+    <h1>Reaction Time Test</h1>
+    <p>Enter your details to begin:</p>
+    <input id="name" placeholder="Name" /><br />
+    <input id="age" type="number" placeholder="Age" /><br />
+    <input id="sex" placeholder="Sex (M/F/Other)" /><br />
+    <button onclick="startVisual()">Start Visual Test</button>
+    <button onclick="startAudio()">Start Audio Test</button>
+
+    <div id="test-area">Instructions will appear here</div>
+
+    <div id="results"></div>
+  </div>
+
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" loop></audio>
 
   <script>
-    const cueBox = document.getElementById('cueBox');
-    const startBtn = document.getElementById('startBtn');
-    const results = document.getElementById('results');
-    const instructions = document.getElementById('instructions');
-    const phaseText = document.getElementById('phase');
+    const testArea = document.getElementById("test-area");
+    const resultsDiv = document.getElementById("results");
+    const beep = document.getElementById("beep");
 
-    let startTime, timeoutID;
-    let currentPhase = 'visual';
     let visualTimes = [];
     let audioTimes = [];
-    let trialCount = 0;
-    const maxTrials = 5;
+    let currentType = ""; // "visual" or "audio"
+    let testCount = 0;
+    let startTime;
 
-    const audio = new Audio();
-    audio.src = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
-    audio.loop = true;
-
-    function startVisualCue() {
-      instructions.textContent = 'Wait for the box to flash';
-      cueBox.style.backgroundColor = 'gray';
-      timeoutID = setTimeout(() => {
-        cueBox.style.backgroundColor = 'lime';
-        startTime = Date.now();
-      }, Math.random() * 2000 + 1000);
+    function showInstructions(message) {
+      testArea.innerText = message;
+      testArea.style.backgroundColor = "#ddd";
     }
 
-    function startAudioCue() {
-      instructions.textContent = 'Wait for the sound';
-      cueBox.textContent = 'Audio Cue';
-      cueBox.style.backgroundColor = 'gray';
-      timeoutID = setTimeout(() => {
-        audio.play();
-        startTime = Date.now();
-      }, Math.random() * 2000 + 1000);
+    function startVisual() {
+      if (!getUserInfo()) return;
+      currentType = "visual";
+      testCount = 0;
+      visualTimes = [];
+      showInstructions("You will see a color flash. Tap as quickly as possible!");
+      setTimeout(runTest, 2000);
     }
 
-    function stopReactionTimer() {
-      if (!startTime) return;
-      const reactionTime = Date.now() - startTime;
-      if (currentPhase === 'visual') {
-        visualTimes.push(reactionTime);
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
-        audioTimes.push(reactionTime);
-      }
-      startTime = null;
-      trialCount++;
+    function startAudio() {
+      if (!getUserInfo()) return;
+      currentType = "audio";
+      testCount = 0;
+      audioTimes = [];
+      showInstructions("You will hear a beep. Tap as quickly as possible!");
+      setTimeout(runTest, 2000);
+    }
 
-      if (trialCount < maxTrials) {
-        currentPhase === 'visual' ? startVisualCue() : startAudioCue();
-      } else {
-        if (currentPhase === 'visual') {
-          showAverage(visualTimes, 'Visual');
-          trialCount = 0;
-          currentPhase = 'audio';
-          startBtn.textContent = 'Start Audio Test';
-          instructions.textContent = 'Next: Audio test. You will hear a sound; tap as quickly as you can.';
-          cueBox.textContent = '';
-          cueBox.style.backgroundColor = 'gray';
+    function runTest() {
+      let delay = Math.random() * 3000 + 1000; // 1s–4s random delay
+      showInstructions("Wait for it...");
+      setTimeout(() => {
+        startTime = Date.now();
+
+        if (currentType === "visual") {
+          testArea.innerText = "TAP NOW!";
+          testArea.style.backgroundColor = "#4CAF50";
         } else {
-          showAverage(audioTimes, 'Audio');
-          startBtn.style.display = 'none';
-          instructions.textContent = 'Test complete. Thanks!';
+          testArea.innerText = "Audio cue playing… TAP!";
+          beep.play();
         }
+
+        testArea.addEventListener("click", recordReaction, { once: true });
+        testArea.addEventListener("touchstart", recordReaction, { once: true });
+      }, delay);
+    }
+
+    function recordReaction() {
+      let time = Date.now() - startTime;
+
+      if (currentType === "visual") {
+        visualTimes.push(time);
+        testArea.style.backgroundColor = "#ddd";
+      } else {
+        audioTimes.push(time);
+        beep.pause();
+        beep.currentTime = 0;
+      }
+
+      testCount++;
+
+      if (testCount < 5) {
+        setTimeout(runTest, 1000);
+      } else {
+        showInstructions("Done! Calculating...");
+        setTimeout(showResults, 1000);
       }
     }
 
-    function showAverage(times, label) {
-      const avg = times.reduce((a, b) => a + b, 0) / times.length;
-      const para = document.createElement('p');
-      para.textContent = `${label} Average: ${avg.toFixed(2)} ms`;
-      results.appendChild(para);
+    function showResults() {
+      let avgVisual = average(visualTimes);
+      let avgAudio = average(audioTimes);
+      let resultHTML = `<h2>Results</h2>`;
+      resultHTML += `<p><strong>Name:</strong> ${name.value}</p>`;
+      resultHTML += `<p><strong>Age:</strong> ${age.value}</p>`;
+      resultHTML += `<p><strong>Sex:</strong> ${sex.value}</p>`;
+      resultHTML += `<p><strong>Visual times (ms):</strong> ${visualTimes.join(", ")}</p>`;
+      resultHTML += `<p><strong>Average visual reaction time:</strong> ${avgVisual.toFixed(2)} ms</p>`;
+      resultHTML += `<p><strong>Audio times (ms):</strong> ${audioTimes.join(", ")}</p>`;
+      resultHTML += `<p><strong>Average audio reaction time:</strong> ${avgAudio.toFixed(2)} ms</p>`;
+      resultsDiv.innerHTML = resultHTML;
+
+      sendToGoogleSheet({
+        name: name.value,
+        age: age.value,
+        sex: sex.value,
+        visualTimes: visualTimes,
+        audioTimes: audioTimes,
+        avgVisual: avgVisual.toFixed(2),
+        avgAudio: avgAudio.toFixed(2),
+      });
     }
 
-    startBtn.addEventListener('click', () => {
-      results.innerHTML = '';
-      trialCount = 0;
-      cueBox.textContent = '';
-      currentPhase === 'visual' ? startVisualCue() : startAudioCue();
-    });
+    function average(arr) {
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
 
-    cueBox.addEventListener('click', stopReactionTimer);
-    cueBox.addEventListener('touchstart', stopReactionTimer);
+    function getUserInfo() {
+      if (!name.value || !age.value || !sex.value) {
+        alert("Please enter your name, age, and sex.");
+        return false;
+      }
+      return true;
+    }
+
+    function sendToGoogleSheet(data) {
+      fetch("https://script.google.com/macros/s/AKfycbzbdvJmThNP4RacCKd746sEdmTgF8unGX6Y3a9ft-Bof_U5mBXYIN5zziLCBFZ_8R1jhQ/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => console.log("Submitted to Google Sheet"))
+      .catch(err => console.error("Error sending data:", err));
+    }
   </script>
 </body>
 </html>
