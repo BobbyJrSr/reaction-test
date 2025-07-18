@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Reaction Time Test</title>
-<style>
-  body { font-family: Arial, sans-serif; text-align:center; padding: 20px; }
-  .square { width: 200px; height: 200px; background: grey; margin: 20px auto; border-radius: 20px; display: flex; justify-content:center; align-items:center; color: white; font-size: 1.5em; }
-  button { padding: 10px 20px; font-size: 16px; margin: 10px; }
-  #results { margin-top: 20px; max-width: 400px; margin-left:auto; margin-right:auto; text-align:left;}
-  input { margin: 5px; padding: 5px; width: 200px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reaction Time Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    .square {
+      width: 200px; height: 200px; background: grey; margin: 20px auto;
+      border-radius: 20px; display: flex; justify-content: center;
+      align-items: center; color: white; font-size: 1.5em;
+    }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+    #results { margin-top: 20px; max-width: 400px; margin-left: auto; margin-right: auto; text-align: left; }
+    input { margin: 5px; padding: 5px; width: 200px; }
+  </style>
 </head>
 <body>
 
@@ -33,6 +37,7 @@
 
   let nameInput, ageInput, sexInput;
   let startTime, reactionTimes = [], currentTest = 0, testType = 'visual';
+  let visualTimes = [], visualAvg = 0;
   let timeout;
   const audioCue = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
@@ -58,7 +63,7 @@
     square.textContent = "WAIT";
     square.style.backgroundColor = 'grey';
     instruction.textContent = testType === 'visual' ? "Wait for the color to change..." : "Wait for the sound...";
-    
+
     const delay = Math.random() * 2000 + 2000;
 
     timeout = setTimeout(() => {
@@ -94,23 +99,23 @@
       instruction.textContent = `Reaction time: ${reactionTime} ms. Get ready for the next one...`;
       setTimeout(runTest, 2000);
     } else if (testType === 'visual') {
-      const avg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
-      results.innerHTML += `<p>Average visual reaction time: ${avg} ms</p>`;
-      sendData('visual', avg);
+      visualTimes = [...reactionTimes];
+      visualAvg = Math.round(visualTimes.reduce((a, b) => a + b) / visualTimes.length);
+      results.innerHTML += `<p>Average visual reaction time: ${visualAvg} ms</p>`;
       testType = 'audio';
       currentTest = 0;
       reactionTimes = [];
       instruction.textContent = "Next, you will hear a sound. Tap as quickly as possible when you hear it.";
       setTimeout(runTest, 3000);
     } else {
-      const avg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
-      results.innerHTML += `<p>Average audio reaction time: ${avg} ms</p>`;
-      sendData('audio', avg);
+      const audioAvg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
+      results.innerHTML += `<p>Average audio reaction time: ${audioAvg} ms</p>`;
       instruction.textContent = "Test complete. Thank you!";
+      sendFinalData(visualTimes, visualAvg, reactionTimes, audioAvg);
     }
   }
 
-  function sendData(type, avg) {
+  function sendFinalData(visualResults, visualAverage, audioResults, audioAverage) {
     fetch("https://script.google.com/macros/s/AKfycbxJ6ZI2A6kkLl4kozyrOq2xgl5-S9aBm9WTJT0MELX705SEGZiZrpq2SU0jMfs_l3ZbTw/exec", {
       method: "POST",
       mode: "no-cors",
@@ -119,8 +124,10 @@
         name: nameInput,
         age: ageInput,
         sex: sexInput,
-        type: type,
-        average: avg
+        visualResults: visualResults.join(', '),
+        visualAverage: visualAverage,
+        audioResults: audioResults.join(', '),
+        audioAverage: audioAverage
       })
     });
   }
