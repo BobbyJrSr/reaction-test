@@ -36,9 +36,10 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 24px;
+      font-size: 28px;
       color: white;
       user-select: none;
+      cursor: pointer;
     }
     #results, #liveResult, #instructions {
       text-align: left;
@@ -52,16 +53,8 @@
       color: white;
       border: none;
       cursor: pointer;
-    }
-    #visualClickBtn {
-      margin-top: 20px;
       padding: 10px 20px;
-      font-size: 18px;
-      background-color: #0077cc;
-      color: white;
-      border: none;
       border-radius: 8px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -73,8 +66,8 @@
       <h3>Instructions</h3>
       <p>1. Enter your name, age, and sex.</p>
       <p>2. First, you will be tested on <strong>Visual Reaction Time</strong>.</p>
-      <p>3. When the color changes, tap the button.</p>
-      <p>4. Then, you will hear <strong>Audio cues</strong>. Tap the box when you hear the sound.</p>
+      <p>3. When the box turns green and says "Click!", click it as fast as you can.</p>
+      <p>4. Then, you will hear sounds. Tap the box when you hear the beep.</p>
     </div>
 
     <input type="text" id="name" placeholder="Name" />
@@ -88,7 +81,6 @@
     <button id="startBtn">Start Test</button>
 
     <div id="cue" class="hidden">Wait...</div>
-    <button id="visualClickBtn" class="hidden">Click Me!</button>
 
     <div id="liveResult" class="hidden"><strong>Last Reaction Time:</strong> <span id="lastTime">-</span> ms</div>
 
@@ -107,7 +99,6 @@
     const copyBtn = document.getElementById("copyBtn");
     const liveResult = document.getElementById("liveResult");
     const lastTime = document.getElementById("lastTime");
-    const visualClickBtn = document.getElementById("visualClickBtn");
 
     const nameInput = document.getElementById("name");
     const ageInput = document.getElementById("age");
@@ -139,13 +130,12 @@
       cue.textContent = "Wait...";
       cue.style.backgroundColor = isAudioPhase ? "#0077cc" : "grey";
       cue.classList.remove("hidden");
-      visualClickBtn.classList.add("hidden");
 
       setTimeout(() => {
         startTime = Date.now();
         if (isAudioPhase) {
           cue.style.backgroundColor = "#0077cc"; // stay blue
-          cue.textContent = "Tap When You Hear Sound";
+          cue.textContent = "Tap when you hear sound";
           let beep = playBeep();
           cue.onclick = () => {
             const reactionTime = Date.now() - startTime;
@@ -158,17 +148,15 @@
             runNextTrial();
           };
         } else {
-          cue.textContent = "";
           cue.style.backgroundColor = "green";
-          visualClickBtn.classList.remove("hidden");
-          visualClickBtn.onclick = () => {
+          cue.textContent = "Click!";
+          cue.onclick = () => {
             const reactionTime = Date.now() - startTime;
             visualTimes.push(reactionTime);
             lastTime.textContent = reactionTime;
             liveResult.classList.remove("hidden");
-            visualClickBtn.classList.add("hidden");
             cue.classList.add("hidden");
-            visualClickBtn.onclick = null;
+            cue.onclick = null;
             runNextTrial();
           };
         }
@@ -225,7 +213,6 @@ Audio Average: ${audioAvg.toFixed(2)} ms
       resultsDiv.classList.add("hidden");
       liveResult.classList.add("hidden");
       cue.onclick = null;
-      visualClickBtn.onclick = null;
       startTrial();
     };
 
