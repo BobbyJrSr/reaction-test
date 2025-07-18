@@ -1,159 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reaction Test</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    .square {
-      width: 200px;
-      height: 200px;
-      background-color: grey;
-      margin: 20px auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1.5em;
-      color: white;
-      border-radius: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin: 10px;
-    }
-    #results {
-      margin-top: 20px;
-      text-align: left;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    input {
-      margin: 5px;
-      padding: 5px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reaction Time Test</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align:center; padding: 20px; }
+  .square { width: 200px; height: 200px; background: grey; margin: 20px auto; border-radius: 20px; display: flex; justify-content:center; align-items:center; color: white; font-size: 1.5em; }
+  button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+  #results { margin-top: 20px; max-width: 400px; margin-left:auto; margin-right:auto; text-align:left;}
+  input { margin: 5px; padding: 5px; width: 200px; }
+</style>
 </head>
 <body>
-  <h1>Reaction Time Test</h1>
-  <p>Enter your details:</p>
-  <input type="text" id="name" placeholder="Name" />
-  <input type="number" id="age" placeholder="Age" />
-  <input type="text" id="sex" placeholder="Sex (M/F/Other)" /><br/>
-  <button onclick="startTest()">Start Test</button>
 
-  <div class="square" id="square">WAIT</div>
-  <p id="instruction">Press start to begin the test.</p>
+<h1>Reaction Time Test</h1>
+<p>Enter your details:</p>
+<input id="name" type="text" placeholder="Name" /><br/>
+<input id="age" type="number" placeholder="Age" /><br/>
+<input id="sex" type="text" placeholder="Sex (M/F/Other)" /><br/>
+<button onclick="startTest()">Start Test</button>
 
-  <div id="results"></div>
+<div class="square" id="square">WAIT</div>
+<p id="instruction">Press start to begin the test.</p>
 
-  <script>
-    const square = document.getElementById('square');
-    const instruction = document.getElementById('instruction');
-    const results = document.getElementById('results');
+<div id="results"></div>
 
-    let nameInput, ageInput, sexInput;
-    let startTime, reactionTimes = [], currentTest = 0, testType = 'visual';
-    let audio, timeout;
+<script>
+  const square = document.getElementById('square');
+  const instruction = document.getElementById('instruction');
+  const results = document.getElementById('results');
 
-    const audioCue = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  let nameInput, ageInput, sexInput;
+  let startTime, reactionTimes = [], currentTest = 0, testType = 'visual';
+  let timeout;
+  const audioCue = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
 
-    function startTest() {
-      nameInput = document.getElementById('name').value.trim();
-      ageInput = document.getElementById('age').value.trim();
-      sexInput = document.getElementById('sex').value.trim();
+  function startTest() {
+    nameInput = document.getElementById('name').value.trim();
+    ageInput = document.getElementById('age').value.trim();
+    sexInput = document.getElementById('sex').value.trim();
 
-      if (!nameInput || !ageInput || !sexInput) {
-        alert("Please enter your name, age, and sex.");
-        return;
-      }
-
-      reactionTimes = [];
-      currentTest = 0;
-      testType = 'visual';
-      results.innerHTML = '';
-      instruction.textContent = "You will see the square change color. Tap as quickly as possible when it does.";
-      setTimeout(runTest, 2000);
+    if (!nameInput || !ageInput || !sexInput) {
+      alert("Please enter your name, age, and sex.");
+      return;
     }
 
-    function runTest() {
-      square.textContent = "WAIT";
-      square.style.backgroundColor = 'grey';
-      instruction.textContent = testType === 'visual' ? "Wait for the color to change..." : "Wait for the sound...";
-      
-      const delay = Math.random() * 2000 + 2000;
+    reactionTimes = [];
+    currentTest = 0;
+    testType = 'visual';
+    results.innerHTML = '';
+    instruction.textContent = "You will see the square change color. Tap as quickly as possible when it does.";
+    setTimeout(runTest, 2000);
+  }
 
-      timeout = setTimeout(() => {
-        if (testType === 'visual') {
-          square.style.backgroundColor = 'green';
-          square.textContent = "CLICK!";
-        } else {
-          audioCue.loop = true;
-          audioCue.play();
-        }
+  function runTest() {
+    square.textContent = "WAIT";
+    square.style.backgroundColor = 'grey';
+    instruction.textContent = testType === 'visual' ? "Wait for the color to change..." : "Wait for the sound...";
+    
+    const delay = Math.random() * 2000 + 2000;
 
-        startTime = new Date().getTime();
-        square.addEventListener('click', recordReaction);
-        square.addEventListener('touchstart', recordReaction);
-      }, delay);
-    }
-
-    function recordReaction() {
-      const endTime = new Date().getTime();
-      const reactionTime = endTime - startTime;
-      reactionTimes.push(reactionTime);
-
-      if (testType === 'audio') {
-        audioCue.pause();
-        audioCue.currentTime = 0;
-      }
-
-      square.removeEventListener('click', recordReaction);
-      square.removeEventListener('touchstart', recordReaction);
-
-      currentTest++;
-      if (currentTest < 5) {
-        instruction.textContent = `Reaction time: ${reactionTime}ms. Get ready for the next one...`;
-        setTimeout(runTest, 2000);
-      } else if (testType === 'visual') {
-        const avg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
-        results.innerHTML += `<p>Average visual reaction time: ${avg}ms</p>`;
-        sendData('visual', avg);
-        testType = 'audio';
-        currentTest = 0;
-        reactionTimes = [];
-        instruction.textContent = "Next, you will hear a sound. Tap as quickly as possible when you hear it.";
-        setTimeout(runTest, 3000);
+    timeout = setTimeout(() => {
+      if (testType === 'visual') {
+        square.style.backgroundColor = 'green';
+        square.textContent = "CLICK!";
       } else {
-        const avg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
-        results.innerHTML += `<p>Average audio reaction time: ${avg}ms</p>`;
-        sendData('audio', avg);
-        instruction.textContent = "Test complete. Thank you!";
+        audioCue.loop = true;
+        audioCue.play();
       }
+
+      startTime = new Date().getTime();
+      square.addEventListener('click', recordReaction);
+      square.addEventListener('touchstart', recordReaction);
+    }, delay);
+  }
+
+  function recordReaction() {
+    const endTime = new Date().getTime();
+    const reactionTime = endTime - startTime;
+    reactionTimes.push(reactionTime);
+
+    if (testType === 'audio') {
+      audioCue.pause();
+      audioCue.currentTime = 0;
     }
 
-    function sendData(type, avg) {
-      fetch("https://script.google.com/macros/s/AKfycbxJ6ZI2A6kkLl4kozyrOq2xgl5-S9aBm9WTJT0MELX705SEGZiZrpq2SU0jMfs_l3ZbTw/exec", {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: nameInput,
-          age: ageInput,
-          sex: sexInput,
-          type: type,
-          average: avg
-        })
-      });
+    square.removeEventListener('click', recordReaction);
+    square.removeEventListener('touchstart', recordReaction);
+
+    currentTest++;
+    if (currentTest < 5) {
+      instruction.textContent = `Reaction time: ${reactionTime} ms. Get ready for the next one...`;
+      setTimeout(runTest, 2000);
+    } else if (testType === 'visual') {
+      const avg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
+      results.innerHTML += `<p>Average visual reaction time: ${avg} ms</p>`;
+      sendData('visual', avg);
+      testType = 'audio';
+      currentTest = 0;
+      reactionTimes = [];
+      instruction.textContent = "Next, you will hear a sound. Tap as quickly as possible when you hear it.";
+      setTimeout(runTest, 3000);
+    } else {
+      const avg = Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length);
+      results.innerHTML += `<p>Average audio reaction time: ${avg} ms</p>`;
+      sendData('audio', avg);
+      instruction.textContent = "Test complete. Thank you!";
     }
-  </script>
+  }
+
+  function sendData(type, avg) {
+    fetch("https://script.google.com/macros/s/AKfycbxJ6ZI2A6kkLl4kozyrOq2xgl5-S9aBm9WTJT0MELX705SEGZiZrpq2SU0jMfs_l3ZbTw/exec", {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: nameInput,
+        age: ageInput,
+        sex: sexInput,
+        type: type,
+        average: avg
+      })
+    });
+  }
+</script>
+
 </body>
 </html>
