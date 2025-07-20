@@ -3,71 +3,229 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reaction Test</title>
+  <title>Reaction Time Test</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding-top: 100px;
-      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f4f8;
     }
-
-    h1 {
-      color: #333;
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
-
-    #reactionBox {
+    input, select, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+      width: 90%;
+      max-width: 300px;
+    }
+    #cue {
+      margin: 30px auto;
       width: 200px;
       height: 200px;
-      margin: 20px auto;
-      background-color: red;
-      display: none;
+      background-color: grey;
+      border-radius: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      color: white;
+      user-select: none;
       cursor: pointer;
     }
-
-    #startButton {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    #resultText {
+    #results, #liveResult, #instructions {
+      text-align: left;
       margin-top: 20px;
-      font-size: 20px;
-      color: #555;
+    }
+    .hidden {
+      display: none;
+    }
+    #copyBtn {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>Reaction Test</h1>
-  <button id="startButton">Start</button>
-  <div id="reactionBox"></div>
-  <p id="resultText"></p>
+  <div class="container">
+    <h1>Reaction Time Test</h1>
+    
+    <div id="instructions">
+      <h3>Instructions</h3>
+      <p>1. Enter your name, age, and sex.</p>
+      <p>2. First, you will be tested on <strong>Visual Reaction Time</strong>.</p>
+      <p>3. When the box turns green and says "Click!", click it as fast as you can.</p>
+      <p>4. Then, you will hear sounds. Tap the box when you hear the beep.</p>
+    </div>
+
+    <input type="text" id="name" placeholder="Name" />
+    <input type="number" id="age" placeholder="Age" />
+    <select id="sex">
+      <option value="">Select Sex</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+    <button id="startBtn">Start Test</button>
+
+    <div id="cue" class="hidden">Wait...</div>
+
+    <div id="liveResult" class="hidden"><strong>Last Reaction Time:</strong> <span id="lastTime">-</span> ms</div>
+
+    <div id="results" class="hidden">
+      <h2>Final Results</h2>
+      <pre id="resultText"></pre>
+      <button id="copyBtn">Copy Results</button>
+    </div>
+  </div>
 
   <script>
-    let startTime, endTime;
-
-    const startButton = document.getElementById("startButton");
-    const reactionBox = document.getElementById("reactionBox");
+    const startBtn = document.getElementById("startBtn");
+    const cue = document.getElementById("cue");
+    const resultsDiv = document.getElementById("results");
     const resultText = document.getElementById("resultText");
+    const copyBtn = document.getElementById("copyBtn");
+    const liveResult = document.getElementById("liveResult");
+    const lastTime = document.getElementById("lastTime");
 
-    startButton.addEventListener("click", () => {
-      resultText.textContent = "";
-      startButton.disabled = true;
+    const nameInput = document.getElementById("name");
+    const ageInput = document.getElementById("age");
+    const sexInput = document.getElementById("sex");
+
+    let visualTimes = [], audioTimes = [];
+    let isAudioPhase = false;
+    let startTime, trialCount = 0;
+    const trialsPerPhase = 5;
+
+    function playBeep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      return {
+        stop: () => {
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
+          osc.stop(ctx.currentTime + 1);
+        }
+      };
+    }
+
+    function startTrial() {
+      if (isAudioPhase) {
+        cue.textContent = "Tap when you hear sound";
+        cue.style.backgroundColor = "#0077cc"; // blue
+      } else {
+        cue.textContent = "Wait...";
+        cue.style.backgroundColor = "grey";
+      }
+      cue.classList.remove("hidden");
 
       setTimeout(() => {
-        reactionBox.style.display = "block";
         startTime = Date.now();
-      }, Math.random() * 2000 + 1000); // random delay between 1–3s
-    });
+        if (isAudioPhase) {
+          let beep = playBeep();
+          cue.onclick = () => {
+            const reactionTime = Date.now() - startTime;
+            audioTimes.push(reactionTime);
+            lastTime.textContent = reactionTime;
+            liveResult.classList.remove("hidden");
+            cue.classList.add("hidden");
+            cue.onclick = null;
+            beep.stop();
+            runNextTrial();
+          };
+        } else {
+          cue.style.backgroundColor = "green";
+          cue.textContent = "Click!";
+          cue.onclick = () => {
+            const reactionTime = Date.now() - startTime;
+            visualTimes.push(reactionTime);
+            lastTime.textContent = reactionTime;
+            liveResult.classList.remove("hidden");
+            cue.classList.add("hidden");
+            cue.onclick = null;
+            runNextTrial();
+          };
+        }
+      }, Math.random() * 2000 + 1000);
+    }
 
-    reactionBox.addEventListener("click", () => {
-      endTime = Date.now();
-      const reactionTime = endTime - startTime;
-      reactionBox.style.display = "none";
-      resultText.textContent = `Your reaction time is ${reactionTime} ms. Finished`;
-      startButton.disabled = false;
-    });
+    function runNextTrial() {
+      trialCount++;
+      if (trialCount < trialsPerPhase) {
+        setTimeout(startTrial, 1000);
+      } else if (!isAudioPhase) {
+        isAudioPhase = true;
+        trialCount = 0;
+        setTimeout(startTrial, 1000);
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      const visualAvg = visualTimes.reduce((a, b) => a + b) / visualTimes.length;
+      const audioAvg = audioTimes.reduce((a, b) => a + b) / audioTimes.length;
+
+      const output = `
+Name: ${nameInput.value}
+Age: ${ageInput.value}
+Sex: ${sexInput.value}
+
+Visual Times (ms): ${visualTimes.join(", ")}
+Visual Average: ${visualAvg.toFixed(2)} ms
+
+Audio Times (ms): ${audioTimes.join(", ")}
+Audio Average: ${audioAvg.toFixed(2)} ms
+
+Finished
+      `.trim();
+
+      resultText.textContent = output;
+      resultsDiv.classList.remove("hidden");
+    }
+
+    startBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      const age = ageInput.value.trim();
+      const sex = sexInput.value;
+
+      if (!name || !age || !sex) {
+        alert("Please enter your name, age, and sex.");
+        return;
+      }
+
+      visualTimes = [];
+      audioTimes = [];
+      trialCount = 0;
+      isAudioPhase = false;
+      resultsDiv.classList.add("hidden");
+      liveResult.classList.add("hidden");
+      cue.onclick = null;
+      startTrial();
+    };
+
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(resultText.textContent)
+        .then(() => alert("Copied to clipboard!"))
+        .catch(err => alert("Failed to copy."));
+    };
   </script>
 </body>
 </html>
