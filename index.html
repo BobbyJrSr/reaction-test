@@ -183,7 +183,7 @@
       const visualAvg = visualTimes.reduce((a, b) => a + b) / visualTimes.length;
       const audioAvg = audioTimes.reduce((a, b) => a + b) / audioTimes.length;
 
-      const output = 
+      const output = `
 Name: ${nameInput.value}
 Age: ${ageInput.value}
 Sex: ${sexInput.value}
@@ -193,7 +193,9 @@ Visual Average: ${visualAvg.toFixed(2)} ms
 
 Audio Times (ms): ${audioTimes.join(", ")}
 Audio Average: ${audioAvg.toFixed(2)} ms
-      .trim();
+
+Finished
+      `.trim();
 
       resultText.textContent = output;
       resultsDiv.classList.remove("hidden");
