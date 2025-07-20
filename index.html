@@ -8,146 +8,65 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 20px;
+      padding-top: 100px;
+      background-color: #f2f2f2;
     }
+
+    h1 {
+      color: #333;
+    }
+
     #reactionBox {
-      width: 100%;
+      width: 200px;
       height: 200px;
-      background-color: gray;
-      margin: 20px 0;
-      line-height: 200px;
-      color: white;
-      font-size: 24px;
-      user-select: none;
+      margin: 20px auto;
+      background-color: red;
+      display: none;
+      cursor: pointer;
     }
-    input, button, select {
-      margin: 5px;
-      padding: 10px;
+
+    #startButton {
+      padding: 10px 20px;
       font-size: 16px;
+      cursor: pointer;
     }
-    pre {
-      background-color: #f4f4f4;
-      padding: 10px;
-      overflow: auto;
-      text-align: left;
+
+    #resultText {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #555;
     }
   </style>
 </head>
 <body>
-
-  <h1>Reaction Time Test</h1>
-
-  <input type="text" id="nameInput" placeholder="Name" />
-  <input type="number" id="ageInput" placeholder="Age" />
-  <select id="sexInput">
-    <option value="" disabled selected>Sex</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-  </select>
-
-  <br />
-  <button id="startVisualBtn">Start Visual Test</button>
-  <button id="startAudioBtn">Start Audio Test</button>
-  <div id="reactionBox">Wait for it...</div>
-
-  <button id="copyResultsBtn">Copy Results</button>
-  <pre id="resultsBox"></pre>
+  <h1>Reaction Test</h1>
+  <button id="startButton">Start</button>
+  <div id="reactionBox"></div>
+  <p id="resultText"></p>
 
   <script>
+    let startTime, endTime;
+
+    const startButton = document.getElementById("startButton");
     const reactionBox = document.getElementById("reactionBox");
-    const startVisualBtn = document.getElementById("startVisualBtn");
-    const startAudioBtn = document.getElementById("startAudioBtn");
-    const copyResultsBtn = document.getElementById("copyResultsBtn");
-    const resultsBox = document.getElementById("resultsBox");
+    const resultText = document.getElementById("resultText");
 
-    const nameInput = document.getElementById("nameInput");
-    const ageInput = document.getElementById("ageInput");
-    const sexInput = document.getElementById("sexInput");
-
-    let startTime;
-    let waiting = false;
-    let testType = "";
-    let visualTimes = [];
-    let audioTimes = [];
-
-    function playBeep() {
-      const ctx = new AudioContext();
-      const oscillator = ctx.createOscillator();
-      oscillator.type = "square";
-      oscillator.frequency.setValueAtTime(1000, ctx.currentTime);
-      oscillator.connect(ctx.destination);
-      oscillator.start();
-      oscillator.stop(ctx.currentTime + 0.2);
-    }
-
-    function startTest(type) {
-      testType = type;
-      waiting = true;
-      reactionBox.textContent = "Wait for it...";
-      reactionBox.style.backgroundColor = "gray";
-
-      const delay = Math.random() * 3000 + 2000;
+    startButton.addEventListener("click", () => {
+      resultText.textContent = "";
+      startButton.disabled = true;
 
       setTimeout(() => {
-        if (testType === "visual") {
-          reactionBox.textContent = "CLICK!";
-          reactionBox.style.backgroundColor = "green";
-        } else if (testType === "audio") {
-          playBeep();
-          reactionBox.textContent = "Click when you hear the beep!";
-        }
+        reactionBox.style.display = "block";
         startTime = Date.now();
-      }, delay);
-    }
-
-    reactionBox.addEventListener("click", () => {
-      if (!waiting || !startTime) return;
-
-      const reactionTime = Date.now() - startTime;
-
-      if (testType === "visual") {
-        visualTimes.push(reactionTime);
-        alert(`Visual Reaction Time: ${reactionTime} ms`);
-      } else if (testType === "audio") {
-        audioTimes.push(reactionTime);
-        alert(`Audio Reaction Time: ${reactionTime} ms`);
-      }
-
-      waiting = false;
-      startTime = null;
-      reactionBox.textContent = "Wait for it...";
-      reactionBox.style.backgroundColor = "gray";
+      }, Math.random() * 2000 + 1000); // random delay between 1–3s
     });
 
-    startVisualBtn.addEventListener("click", () => startTest("visual"));
-    startAudioBtn.addEventListener("click", () => startTest("audio"));
-
-    copyResultsBtn.addEventListener("click", () => {
-      const visualAvg =
-        visualTimes.reduce((a, b) => a + b, 0) / (visualTimes.length || 1);
-      const audioAvg =
-        audioTimes.reduce((a, b) => a + b, 0) / (audioTimes.length || 1);
-
-      const output = `
-Name: ${nameInput.value}
-Age: ${ageInput.value}
-Sex: ${sexInput.value}
-
-Visual Times (ms): ${visualTimes.join(", ")}
-Visual Average: ${visualAvg.toFixed(2)} ms
-
-Audio Times (ms): ${audioTimes.join(", ")}
-Audio Average: ${audioAvg.toFixed(2)} ms
-
-FINISHED
-`.trim();
-
-      resultsBox.textContent = output;
-
-      navigator.clipboard.writeText(output).then(() => {
-        alert("Results copied to clipboard!");
-      });
+    reactionBox.addEventListener("click", () => {
+      endTime = Date.now();
+      const reactionTime = endTime - startTime;
+      reactionBox.style.display = "none";
+      resultText.textContent = `Your reaction time is ${reactionTime} ms. Finished`;
+      startButton.disabled = false;
     });
   </script>
 </body>
